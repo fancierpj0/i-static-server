@@ -7,7 +7,7 @@
     "test": ""
   },
   "bin": {
-    "run-static": "bin/www"
+    "static-server": "bin/www"
   },
   "keywords": [],
   "author": "fancier",
