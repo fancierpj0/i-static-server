@@ -1,0 +1,20 @@
+{
+  "name": "static-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": ""
+  },
+  "bin": {
+    "static-server": "bin/www"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.3.1",
+    "debug": "^3.1.0",
+    "handlebars": "^4.0.11"
+  }
+}
