@@ -1,12 +1,10 @@
 #! /usr/bin/env node
 let { spawn } = require('child_process');
-//detached领头 独立
+
 let child = spawn('node',['www.js'],{
   cwd:__dirname
   ,detached:true
 });
 
-//让主进程 不再管我了 主进程在事件环里不再处理控制子进程 (默认的话，是子进程全部关闭后主进程才关闭，但子继承独立后就不是了。换句话说，此时退出主进程不会关闭子进程）
-//unref和exit必须同时使用
 child.unref();
 process.exit(0);

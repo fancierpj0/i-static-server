@@ -9,3 +9,11 @@ let config = {
 
 debug('默认配置:',config);
 module.exports = config;
+
+let fs = require('fs');
+let path = require('path');
+fs.stat(path.join(__dirname,'..','说明.txt'),(err,statObj)=>{
+  if(err) return console.log(err);
+  console.log(new Date(statObj.ctime).getTime()); //2018-03-02T17:02:59.900Z
+  //1520010179900
+})

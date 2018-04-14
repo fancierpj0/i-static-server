@@ -35,3 +35,16 @@ let argv = yargs.option('d',{
 //argv = {d,root,o,host,p,port}
 let server = new Server(argv);
 server.start();
+
+let os = require('os').platform();
+console.log(os);
+
+let {exec} = require('child_process');
+let url = `http://${argv.hostname}:${argv.port}`
+if(argv.open){
+  if(os === 'win32'){
+    exec(`start ${url}`);
+  }else{
+    exec(`open ${url}`);
+  }
+}

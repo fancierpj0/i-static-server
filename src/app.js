@@ -21,15 +21,11 @@ let debug = require('debug')('static:app');
 //是否在控制台打印取决于环境变量中DEBUG的值是否等于static:app
 //设置的环境变量有特点，约定第一部分是项目名，第二部分是模块名
 
-/**
- * 1. 显示目录下面的文件列表和返回内容
- * 2. 实现压缩的功能
- * 3. 实现缓存
- */
+
 class Server {
   constructor(argv){
     this.list = list();
-    this.config = Object.assign({},config,argv); //后面覆盖前面
+    this.config = Object.assign({},config,argv);
   }
   start(){
     let server = http.createServer();
@@ -39,16 +35,16 @@ class Server {
       debug(`server started at ${chalk.green(url)}`);
     });
   }
-  //静态文件服务器
+
   async request(req,res){
     //先取到客户端向访问的文件或文件夹路径
     let{pathname} = url.parse(req.url);
-    if(pathname === '/favicon.ico') return; //网站图标
+    if(pathname === '/favicon.ico') return res.end(); //网站图标
     let filepath = path.join(this.config.root,pathname);
     try{
       let statObj = await stat(filepath);
       if(statObj.isDirectory()){ //如果是目录，应该显示目录下的文件列表
-        let files = await readdir(filepath);
+        let files = await readdir(filepath); //返回的是文件名组成的数组（不带路径）
         files = files.map(file=>({
           name:file,
           url:path.join(pathname,file) //  /images,/index.css,/index.html
@@ -71,30 +67,33 @@ class Server {
 
   sendFile(req,res,filepath,statObj){
     if(this.handleCache(req,res,filepath,statObj))return; //如果走缓存，则直接返回
-    res.setHeader('Content-type',mime.getType(filepath)+';charset=utf-8'); //.jpg
+    res.setHeader('Content-type',mime.getType(filepath)+';charset=utf-8');
     let encoding = this.getEncoding(req,res);
     let rs = this.getStream(req,res,filepath,statObj);
     if(encoding){
-      rs.pipe(encoding).pipe(res);
+      rs.pipe(encoding).pipe(res); //先交给转换流（encoding）处理，再分发给res
     }else{
       rs.pipe(res);
     }
   }
   getStream(req,res,filepath,statObj){
     let start = 0;
-    let end = statObj.size - 1;
+    // let end = statObj.size - 1;
+    let end = statObj.size;
     let range = req.headers['range'];
     if(range){
-      res.setHeader('Accept-Range','bytes');
-      res.statusCode = 206; //返回整个数据的一块
       let result = range.match(/bytes=(\d*)-(\d*)/); //不可能有小数，网络传输的最小单位为一个字节
       if(result){
         start = isNaN(result[1])?0:parseInt(result[1]);
-        end = isNaN(result[2])?end:parseInt(result[2]) - 1;
+        // end = isNaN(result[2])?end:parseInt(result[2]) - 1;
+        end = isNaN(result[2])?end:parseInt(result[2]);
       }
+      res.setHeader('Accept-Range','bytes');
+      res.setHeader('Content-Range',`bytes ${start}-${end}/${statObj.size}`)
+      res.statusCode = 206; //返回整个数据的一块
     }
     return fs.createReadStream(filepath,{
-      start,end
+      start:start-1,end:end-1
     });
   }
   sendError(req,res){
@@ -118,12 +117,12 @@ class Server {
     let isNoneMatch = req.headers['is-none-match'];
     res.setHeader('Cache-Control','private,max-age=30');
     res.setHeader('Expires',new Date(Date.now()+30*1000).toGMTString()); //这个expires的强制缓存的时间格式不能随便写
-    let etag = statObj.size;
+    let etag = statObj.size; //new Date(statObj.ctime.toGMTString()).getTime()+'-'+statObj.size
     let lastModified = statObj.ctime.toGMTString();
     res.setHeader('ETag',etag);
     res.setHeader('Last-Modified',lastModified);
 
-    if(isNoneMatch && isNoneMatch != etag)return false;
+    if(isNoneMatch && isNoneMatch != etag)return false; //存在且相等就放行
     if(ifModifiedSince && ifModifiedSince != lastModified)return false;
     if(isNoneMatch || ifModifiedSince){
       res.writeHead(304);
@@ -132,11 +131,19 @@ class Server {
     }else{
       return false;
     }
+
+    // if(ifNoneMatch !==etag ){
+    //   return false;
+    // }
+    // if(ifModifiedSince!=since){
+    //     return false;
+    // }
+    // res.statusCode = 304;
+    // res.end();
+    // return true;
+
   }
 
 }
-
-// let server = new Server();
-// server.start(); //启动服务
 
 module.exports = Server;

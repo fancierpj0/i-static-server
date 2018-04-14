@@ -31,6 +31,5 @@ let argv = yargs.option('d',{
   )
   .help('h').argv;
 
-//argv = {d,root,o,host,p,port}
 let server = new Server(argv);
 server.start();

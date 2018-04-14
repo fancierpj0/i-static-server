@@ -1,6 +1,6 @@
 {
-  "name": "i-static-server",
-  "version": "0.0.9",
+  "name": "static-server-study",
+  "version": "0.0.99",
   "description": "",
   "main": "./src/app.js",
   "scripts": {
